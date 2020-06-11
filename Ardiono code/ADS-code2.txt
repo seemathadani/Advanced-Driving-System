@@ -1,0 +1,89 @@
+
+// This code is used to detect obstacles in Left & Right and operates the smoke sensor also.
+// LEft and Right ultrasonics will give warnings if obstacle is there.
+// By using Smoke sensor, we can detect smoke and alcohol as well.
+
+// Left-Right Ultrasonic
+#define trigPin1 13
+#define echoPin1 12
+#define trigPin2 11
+#define echoPin2 10
+// Left-Right LEDs
+#define ledPin1 9
+#define ledPin2 8
+// Smoke Detector LED
+#define greenLed 7
+// Smoke detector value (air density in ppm)
+#define smokeA0 A5
+// Your threshold value at which sensor will warn
+#define sensorThres 215
+#define soundSpeed 0.0343
+
+float distance1, distance2;
+
+void setup() {
+  // put your setup code here, to run once:
+  Serial.begin(9600);
+  pinMode(trigPin1, OUTPUT);
+  pinMode(echoPin1, INPUT);
+  pinMode(trigPin2, OUTPUT);
+  pinMode(echoPin2, INPUT);
+  pinMode(ledPin1, OUTPUT);
+  pinMode(ledPin2, OUTPUT);
+  pinMode(greenLed, OUTPUT);
+  pinMode(smokeA0, INPUT);
+}
+
+void loop() {
+  // put your main code here, to run repeatedly:
+
+  distance1 = get_dist(trigPin1,echoPin1);
+  distance2 = get_dist(trigPin2,echoPin2);
+  Serial.print(distance1);
+  Serial.print(" ");
+  Serial.println(distance2);
+
+  int analogSensor = analogRead(smokeA0);
+
+  if(distance1 <= 10) {
+    digitalWrite(ledPin1, HIGH);
+  }
+  else {
+    digitalWrite(ledPin1, LOW);
+  }
+
+  if(distance2 <= 10) {
+    digitalWrite(ledPin2, HIGH);
+  }
+  else {
+    digitalWrite(ledPin2, LOW);
+  }
+
+  Serial.print(digitalRead(ledPin1));
+  Serial.print(digitalRead(ledPin2));
+  if (analogSensor > sensorThres)
+  {
+    digitalWrite(greenLed, HIGH);
+  }
+  else
+  {
+    digitalWrite(greenLed, LOW);
+  }
+  Serial.print(digitalRead(greenLed));
+  Serial.print(" ");
+  Serial.println(analogSensor);
+  
+  delay(100);
+}
+
+float get_dist(int pin1, int pin2) {
+  digitalWrite(pin1, LOW);
+  delayMicroseconds(2);
+  digitalWrite(pin1, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(pin1, LOW);
+
+  float duration = pulseIn(pin2, HIGH);
+  float distance = duration * soundSpeed / 2;
+  return distance;
+}

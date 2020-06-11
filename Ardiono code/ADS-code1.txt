@@ -1,0 +1,132 @@
+
+// This is the Arduino code for forward and backward object detection.
+// It also runs a Motor Driving IC to run the car.
+// If any object is found, the Automated Braking System will be turned on.
+// Braking System works depending on the obstacle's distnace from the car.
+
+// front ultrasonic
+#define trigPin1 13
+#define echoPin1 12
+// back ultrasonic
+#define trigPin2 11
+#define echoPin2 10
+// L293D IC
+#define in1 9
+#define in2 8
+#define in3 7
+#define in4 6
+// LEDs
+#define ledPin1 5
+#define ledPin2 4
+// Enable pins to L293D
+#define enable1 3
+#define enable2 2
+//constant
+#define soundSpeed 0.0343
+
+float duration1, distance1, duration2, distance2;
+
+void setup() {
+  // put your setup code here, to run once:
+  Serial.begin(9600);
+  pinMode(trigPin1, OUTPUT);
+  pinMode(echoPin1, INPUT);
+  pinMode(trigPin2, OUTPUT);
+  pinMode(echoPin2, INPUT);
+  pinMode(in1, OUTPUT);
+  pinMode(in2, OUTPUT);
+  pinMode(in3, OUTPUT);
+  pinMode(in4, OUTPUT);
+  pinMode(enable1, OUTPUT);
+  pinMode(enable2, OUTPUT);
+  pinMode(ledPin1, OUTPUT);
+  pinMode(ledPin2, OUTPUT);
+}
+
+void loop() {
+  // put your main code here, to run repeatedly:
+
+  digitalWrite(enable1, HIGH);
+  digitalWrite(enable2, HIGH);
+  
+  distance1 = get_dist(trigPin1,echoPin1);
+  distance2 = get_dist(trigPin2,echoPin2);
+//  Serial.print(distance1);
+//  Serial.print(" ");
+//  Serial.println(distance2);
+
+  // to conntrol motor
+  if(distance1 > 10 && distance1 <= 20) {
+    halt();
+  }
+  else if(distance1 <= 10) {
+    if(distance2 <= 10) {
+      halt();
+    }
+    else {
+      backward();
+    }
+  }
+  else {
+    forward();
+  }
+
+  // to control LEDs
+  if(distance1 <= 30) {
+    digitalWrite(ledPin1, HIGH);
+  }
+  else {
+    digitalWrite(ledPin1, LOW);
+  }
+  if(distance2 <= 15) {
+    digitalWrite(ledPin2, HIGH);
+  }
+  else {
+    digitalWrite(ledPin2, LOW);
+  }
+  
+  delay(100);
+}
+
+void forward() {
+  digitalWrite(in1, HIGH);
+  digitalWrite(in2, LOW);
+  digitalWrite(in3, HIGH);
+  digitalWrite(in4, LOW);
+  prit();
+}
+
+void backward() {
+  digitalWrite(in1, LOW);
+  digitalWrite(in2, HIGH);
+  digitalWrite(in3, LOW);
+  digitalWrite(in4, HIGH);
+  prit();
+}
+
+void halt() {
+  digitalWrite(in1, LOW);
+  digitalWrite(in2, LOW);
+  digitalWrite(in3, LOW);
+  digitalWrite(in4, LOW);
+  prit();
+}
+
+void prit() {
+  Serial.print(digitalRead(in1));
+  Serial.print(digitalRead(in2));
+  Serial.print(digitalRead(in3));
+  Serial.println(digitalRead(in4));
+}
+
+float get_dist(int pin1, int pin2) {
+  digitalWrite(pin1, LOW);
+  delayMicroseconds(2);
+  digitalWrite(pin1, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(pin1, LOW);
+
+  float duration = pulseIn(pin2, HIGH);
+  float distance = duration * soundSpeed / 2;
+  return distance;
+}
